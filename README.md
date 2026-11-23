@@ -65,6 +65,5 @@ Constantes (andares, nº de elevadores, capacidade, velocidade) ficam em `comum.
 - Encerramento: threads usam *timeouts* (`timedwait`/`timedreceive`) para checar a flag de parada; recursos IPC são removidos (`mq_unlink`, `shm_unlink`).
 
 ## Equipe
-- Nome 1 — matrícula
-- Nome 2 — matrícula
-- Nome 3 — matrícula
+- Reginaldo José Pimentel Silva
+
