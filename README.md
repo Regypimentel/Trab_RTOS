@@ -25,6 +25,8 @@ make
 ```bash
 wsl bash -c "cd ~ && ([ -d trabalho-de-elevador ] || git clone https://github.com/Regypimentel/trabalho-de-elevador.git) && cd trabalho-de-elevador && make && ./elevador 30"
 
+wsl bash -c "cd ~/trabalho-de-elevador && ./corrida"
+
 ```
 
 Constantes (andares, nº de elevadores, capacidade, velocidade) ficam em `comum.h`.
