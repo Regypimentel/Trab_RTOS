@@ -12,7 +12,7 @@ as mesmas chamadas) é uma aplicação direta de concorrência e sincronização
 Requisitos: Linux (ou WSL), `gcc`, `make`. Terminal com pelo menos 80x22 e suporte a ANSI.
 
 ```bash
-git clone <URL-DO-REPOSITORIO>
+git clone https://github.com/Regypimentel/trabalho-de-elevador.git
 cd simulador-elevadores
 make
 ./elevador          # roda até Ctrl+C
