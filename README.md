@@ -19,8 +19,7 @@ make
 ./elevador 60       # roda por 60 segundos e mostra o resumo
 ./corrida           # demo de condição de corrida (sem mutex x com mutex
 
-bAUTO
-wsl bash -c "cd ~ && ([ -d trabalho-de-elevador ] || git clone https://github.com/Regypimentel/trabalho-de-elevador.git) && cd trabalho-de-elevador && make && ./elevador 30"
+
 ```
 AUTO
 wsl bash -c "cd ~ && ([ -d trabalho-de-elevador ] || git clone https://github.com/Regypimentel/trabalho-de-elevador.git) && cd trabalho-de-elevador && make && ./elevador 30"
