@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Elevadores concorrentes</title>
+<style>
+:root{--bg:#0f1b2d;--panel:#18304f;--line:#2b4a73;--tx:#eef1f5;--mut:#8fa3bd;--ok:#3ec1b5;--blue:#4f8cff;--amb:#f5a524;--red:#ff6b5b;--idle:#8fa3bd;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:760px;margin:0 auto;padding:20px 16px 32px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+button{font:inherit;font-weight:600;color:var(--tx);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 16px;cursor:pointer}
+button:hover{border-color:var(--mut)}
+#go{background:var(--ok);color:#0f1b2d;border-color:var(--ok)}
+#mx.on{border-color:var(--ok);color:var(--ok)}
+#mx.off{border-color:var(--red);color:var(--red)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:14px}
+canvas{display:block;width:100%;height:auto}
+.leg{display:flex;flex-wrap:wrap;gap:6px 16px;margin:12px 0;color:var(--mut);font-size:14px}
+.leg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.st{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:12px}
+.st div{padding:14px;text-align:center}
+.st b{display:block;font-size:30px}
+.st span{color:var(--mut);font-size:14px}
+#log{padding:12px 14px;height:170px;overflow:auto;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;color:var(--mut)}
+#log .r{color:var(--red)}
+</style></head><body><main>
+<div class="bar">
+<button id="go">▶ Iniciar</button><button id="add">+ Passageiro</button><button id="mx" class="on">🔒 Mutex: LIGADO</button><button id="rs">↺ Reiniciar</button>
+</div>
+<div class="box"><canvas id="c" width="640" height="400"></canvas></div>
+<div class="leg"><span><i style="background:var(--idle)"></i>ocioso</span><span><i style="background:var(--blue)"></i>indo buscar</span><span><i style="background:var(--amb)"></i>levando passageiro</span><span><i style="background:var(--red)"></i>viagem em vão</span></div>
+<div class="st">
+<div class="box"><b id="s1">0</b><span>atendidos</span></div>
+<div class="box"><b id="s2">0</b><span>esperando</span></div>
+<div class="box"><b id="s3">—</b><span>espera média (s)</span></div>
+<div class="box"><b id="s4" style="color:var(--red)">0</b><span>viagens em vão</span></div>
+</div>
+<div id="log" class="box"></div>
+<script>
+const N=8,cv=document.getElementById('c'),x=cv.getContext('2d'),W=640,H=400,RH=H/N,$=id=>document.getElementById(id);
+let run,mutex=true,P,E,st,sp,lg,t,last,pid;
+const col={idle:'#8fa3bd',read:'#4f8cff',go:'#4f8cff',carry:'#f5a524',vain:'#ff6b5b'};
+function say(m,r){lg.unshift('['+t.toFixed(1)+'s] '+m+(r?'|r':''));lg=lg.slice(0,40);$('log').innerHTML=lg.map(l=>l.endsWith('|r')?'<div class="r">'+l.slice(0,-2)+'</div>':'<div>'+l+'</div>').join('')}
+function reset(){t=0;P=[];pid=0;sp=1;lg=[];run=false;st={ok:0,vain:0,w:0,n:0};
+E=[0,1,2].map(i=>({i,f:i*3,st:'idle',p:null,tg:0,win:0,fl:0}));
+$('go').textContent='▶ Iniciar';say('Sistema pronto. Mutex '+(mutex?'LIGADO':'DESLIGADO')+'.')}
+function add(){let o=Math.floor(Math.random()*N),d;do d=Math.floor(Math.random()*N);while(d==o);
+if(P.length>=24)return;const p={id:++pid,o,d,t0:t,claim:-1,picked:false};P.push(p);say('Passageiro #'+p.id+': andar '+o+' → '+d+' (cond_broadcast acorda os elevadores)')}
+function mv(e,dt){const d=e.tg-e.f,s=2.2*dt;if(Math.abs(d)<=s){e.f=e.tg;return true}e.f+=Math.sign(d)*s;return false}
+function tick(dt){t+=dt;if(run){sp-=dt;if(sp<=0){add();sp=2.5+Math.random()*1.5}}
+for(const e of E){
+if(e.st=='idle'){let b=null,bd=99;for(const p of P)if(!p.picked&&p.claim<0){const q=Math.abs(p.o-e.f);if(q<bd){bd=q;b=p}}
+ if(b){e.p=b;if(mutex){b.claim=e.i;e.st='go';e.tg=b.o;say('E'+(e.i+1)+' travou o mutex e reservou #'+b.id)}else{e.st='read';e.win=.45+Math.random()*.35}}}
+else if(e.st=='read'){e.win-=dt;if(e.win<=0){const p=e.p;if(p.claim>=0&&p.claim!=e.i)say('CORRIDA: E'+(e.i+1)+' e E'+(p.claim+1)+' escolheram #'+p.id,1);p.claim=e.i;e.st='go';e.tg=p.o}}
+else if(e.st=='go'){if(mv(e,dt)){const p=e.p;if(p.picked){st.vain++;e.st='vain';e.fl=1.3;say('E'+(e.i+1)+' chegou e #'+p.id+' já foi atendido: viagem em vão',1)}
+ else{p.picked=true;P=P.filter(q=>q!==p);st.w+=t-p.t0;st.n++;e.st='carry';e.tg=p.d;say('E'+(e.i+1)+' embarcou #'+p.id+' (esperou '+(t-p.t0).toFixed(1)+'s)')}}}
+else if(e.st=='carry'){if(mv(e,dt)){st.ok++;e.st='idle';say('E'+(e.i+1)+' entregou no andar '+e.f)}}
+else if(e.st=='vain'){e.fl-=dt;if(e.fl<=0){e.st='idle'}}}
+}
+function draw(){x.clearRect(0,0,W,H);x.font='bold 13px system-ui,sans-serif';x.textBaseline='middle';
+for(let f=0;f<N;f++){const y=(N-1-f)*RH;x.strokeStyle='#2b4a73';x.beginPath();x.moveTo(0,y+RH);x.lineTo(W,y+RH);x.stroke();x.fillStyle='#8fa3bd';x.fillText('Andar '+f,10,y+RH/2)}
+for(let i=0;i<3;i++){x.fillStyle='#0f1b2d';x.strokeStyle='#2b4a73';x.fillRect(330+i*105,6,90,H-12);x.strokeRect(330+i*105,6,90,H-12);x.fillStyle='#8fa3bd';x.textAlign='center';x.fillText('Thread E'+(i+1),375+i*105,H-14);x.textAlign='left'}
+const cnt={};for(const p of P){const k=cnt[p.o]=(cnt[p.o]||0);cnt[p.o]++;const cx=100+k*26,cy=(N-1-p.o)*RH+RH/2;x.fillStyle=t-p.t0>6?'#ff6b5b':(p.claim>=0?'#7fb0ff':'#eef1f5');x.beginPath();x.arc(cx,cy,10,0,7);x.fill();x.fillStyle='#0f1b2d';x.textAlign='center';x.fillText(p.d,cx,cy+1);x.textAlign='left'}
+for(const e of E){const y=(N-1-e.f)*RH+6;x.fillStyle=col[e.st];x.fillRect(336+e.i*105,y,78,RH-12);x.fillStyle='#fff';x.textAlign='center';x.fillText(e.st=='carry'?'→ '+e.tg:e.st=='vain'?'✗':'',375+e.i*105,y+RH/2-6);x.textAlign='left'}
+$('s1').textContent=st.ok;$('s2').textContent=P.length;$('s3').textContent=st.n?(st.w/st.n).toFixed(1):'—';$('s4').textContent=st.vain}
+function loop(ts){const dt=Math.min((ts-(last||ts))/1000,.1);last=ts;tick(dt);draw();requestAnimationFrame(loop)}
+$('go').onclick=()=>{run=!run;$('go').textContent=run?'⏸ Pausar':'▶ Iniciar';say(run?'Passageiros chegando…':'Chegadas pausadas.')};
+$('add').onclick=add;
+$('mx').onclick=()=>{mutex=!mutex;const b=$('mx');b.className=mutex?'on':'off';b.textContent=mutex?'🔒 Mutex: LIGADO':'🔓 Mutex: DESLIGADO';say('Mutex '+(mutex?'LIGADO: escolha atômica.':'DESLIGADO: leitura e escrita podem se intercalar!'),!mutex)};
+$('rs').onclick=reset;
+reset();requestAnimationFrame(loop);
+</script></main></body></html>
