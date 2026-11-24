@@ -12,22 +12,21 @@ as mesmas chamadas) é uma aplicação direta de concorrência e sincronização
 Requisitos: Linux (ou WSL), `gcc`, `make`. Terminal com pelo menos 80x22 e suporte a ANSI.
 
 ```bash
-git clone https://github.com/Regypimentel/trabalho-de-elevador.git
-cd simulador-elevadores
+git clone https://github.com/Regypimentel/Trab_RTOS.git
+cd Trab_RTOS
 make
 ./elevador          # roda até Ctrl+C
 ./elevador 60       # roda por 60 segundos e mostra o resumo
-./corrida           # demo de condição de corrida (sem mutex x com mutex
+./corrida           # demo de condição de corrida (sem mutex x com mutex)
 
 ```
 
-###AUTO
+### AUTO
 ```bash
-wsl bash -c "cd ~ && ([ -d trabalho-de-elevador ] || git clone https://github.com/Regypimentel/trabalho-de-elevador.git) && cd trabalho-de-elevador && make && ./elevador 30"
+wsl bash -c "cd ~ && ([ -d Trab_RTOS ] || git clone https://github.com/Regypimentel/Trab_RTOS.git) && cd Trab_RTOS && make && ./elevador 30"
 ```
 ```bash
-wsl bash -c "cd ~/trabalho-de-elevador && ./corrida"
-
+wsl bash -c "cd ~/Trab_RTOS && ./corrida"
 ```
 
 Constantes (andares, nº de elevadores, capacidade, velocidade) ficam em `comum.h`.
